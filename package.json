@@ -6,6 +6,9 @@
   "scripts": {
     "test": "./node_modules/.bin/mocha ./tests/test.* -w"
   },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/"
+  },
   "author": "Ideolys",
   "license": "Apache-2.0",
   "devDependencies": {
