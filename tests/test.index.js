@@ -65,6 +65,39 @@ describe('Cache LRU', () => {
           value : 2
         }
       ]);
+
+      should(lru.get('a')).eql(undefined);
+      should(lru.get('b')).eql(2);
+      should(lru.get('c')).eql(3);
+
+      should(lru.entries()).eql([
+        {
+          key   : 'c',
+          value : 3
+        },
+        {
+          key   : 'b',
+          value : 2
+        }
+      ]);
+
+      lru.set('d', 4);
+
+      should(lru.get('b')).eql(undefined);
+      should(lru.get('d')).eql(4);
+
+      lru.delete('c');
+
+      should(lru.get('c')).eql(undefined);
+      should(lru.get('c')).eql(undefined);
+      should(lru.get('d')).eql(4);
+
+      should(lru.entries()).eql([
+        {
+          key   : 'd',
+          value : 4
+        }
+      ]);
     });
 
     it('should set and delete element if the size has been reached and call the function', done => {
@@ -89,6 +122,8 @@ describe('Cache LRU', () => {
           value : 2
         }
       ]);
+
+      should(lru.get('a')).eql(undefined);
     });
 
     it('should move to the top the updated key : first key', () => {
@@ -439,7 +474,7 @@ describe('Cache LRU', () => {
       lru.set('b', 2);
       lru.set('c', 3);
       lru.delete('b');
-      lru.set('d', 4)
+      lru.set('d', 4);
       should(lru.entries()).eql([
         { key : 'd', value : 4 },
         { key : 'c', value : 3 },

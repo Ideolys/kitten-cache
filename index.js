@@ -37,8 +37,6 @@ function Cache (options = {}) {
   this.nexts  = new _array(this.size);
   this.prevs  = new _array(this.size);
 
-  this.availablePointers = new Array();
-
   this.head   = 0;
   this.tail   = 0;
   this.length = 0;
@@ -46,24 +44,34 @@ function Cache (options = {}) {
 
 
 Cache.prototype._moveToTheTop = function (pointer) {
-  var _next = this.nexts[pointer];
-  var _prev = this.prevs[pointer];
-
   if (this.head === pointer) {
     return;
   }
 
+  var _next = this.nexts[pointer];
+  var _prev = this.prevs[pointer];
+  var _head = this.head;
+
   if (pointer === this.tail) {
     this.tail = _prev;
   }
-
-  this.nexts[pointer] = this.head;
-  this.prevs[pointer] = pointer;
+  else {
+    this.prevs[_next] = _prev;
+  }
 
   this.nexts[_prev] = _next;
-  this.prevs[_next] = _prev;
-
+  this.prevs[this.head] = pointer;
   this.head = pointer;
+
+  this.nexts[pointer] = _head;
+}
+
+Cache.prototype._notify = function (pointer) {
+  if (!this.callback) {
+    return true;
+  }
+
+  this.callback(this.keys[pointer], this.values[pointer]);
 }
 
 /**
@@ -80,30 +88,9 @@ Cache.prototype.delete = function (pointer, isPointer = false) {
     return false;
   }
 
-  var _next     = this.nexts[pointer];
-  var _prev     = this.prevs[pointer];
-  this.nexts[_prev] = _next;
-
-  if (pointer === this.tail) {
-    this.tail = _prev;
-  }
-  else {
-    this.prevs[_next] = _prev;
-
-    if (pointer === this.head) {
-      this.head = _next;
-    }
-  }
-
   delete this.items[this.keys[pointer]];
-  this.length--;
-  this.availablePointers.push(pointer);
-
-  if (!this.callback) {
-    return true;
-  }
-
-  this.callback(this.keys[pointer], this.values[pointer]);
+  this._notify(pointer);
+  this.keys[pointer] = null;
 }
 
 /**
@@ -122,14 +109,12 @@ Cache.prototype.set = function (key, value) {
 
   if (this.length < this.size) {
     _pointer = this.length++;
-
-    if(this.availablePointers.length) {
-      _pointer = this.availablePointers.shift();
-    }
   }
   else {
-    _pointer = this.tail;
-    this.delete(_pointer, true);
+    _pointer  = this.tail;
+    this.tail = this.prevs[_pointer];
+    this._notify(_pointer);
+    delete this.items[this.keys[_pointer]];
   }
 
   this.items[key]       = _pointer;
@@ -151,10 +136,12 @@ Cache.prototype.entries = function () {
   }
 
   while (_pointer >= 0) {
-    _entries.push({
-      key   : this.keys[_pointer],
-      value : this.values[_pointer]
-    });
+    if (this.keys[_pointer] !== null) {
+      _entries.push({
+        key   : this.keys[_pointer],
+        value : this.values[_pointer]
+      });
+    }
 
     _lastPointer = _pointer;
     _pointer     = this.nexts[_pointer];
