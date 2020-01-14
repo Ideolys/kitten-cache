@@ -214,6 +214,21 @@ describe('Cache LRU', () => {
           value : 11
         }
       ]);
+
+      should(lru.get('b')).eql(undefined);
+      should(lru.get('c')).eql(3);
+      should(lru.get('a')).eql(11);
+
+      should(lru.entries()).eql([
+        {
+          key   : 'a',
+          value : 11
+        },
+        {
+          key   : 'c',
+          value : 3
+        }
+      ]);
     });
 
     it('should move to the top the updated key and remove', () => {
